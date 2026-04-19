@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACKER EMRE | SİBER OPERASYON MERKEZİ</title>
+    <style>
+        :root { --ordu-yesili: #3a4d39; --neon-yesil: #00ff41; --altin: #ffd700; --karanlik: #05070a; --uyari: #ff3e3e; }
+        body, html { margin: 0; padding: 0; background: var(--karanlik); color: #a1b0a1; font-family: 'Courier New', Courier, monospace; height: 100%; overflow: hidden; }
+        
+        #radar { position: fixed; width: 600px; height: 600px; border: 1px solid rgba(0,255,0,0.1); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; }
+        #radar::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: conic-gradient(from 0deg, rgba(0,255,0,0.2), transparent); animation: rotate 4s linear infinite; border-radius: 50%; }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+
+        #app { display: none; height: 100vh; grid-template-columns: 300px 1fr 280px; grid-template-rows: 70px 1fr; }
+
+        header { grid-column: 1/4; background: rgba(10,15,10,0.95); border-bottom: 2px solid var(--ordu-yesili); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+        .durum-isigi { width: 10px; height: 10px; background: var(--neon-yesil); border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 10px var(--neon-yesil); }
+
+        .sidebar { background: rgba(5,10,5,0.95); border-right: 1px solid var(--ordu-yesili); padding: 20px; overflow-y: auto; }
+        .kimlik-karti { border: 1px solid var(--ordu-yesili); padding: 15px; background: #0a0f0a; text-align: center; position: relative; margin-bottom: 20px; }
+
+        .ana-ekran { display: flex; flex-direction: column; background: rgba(0,0,0,0.85); border: 1px solid #111; }
+        .terminal { flex: 1; padding: 20px; overflow-y: auto; scroll-behavior: smooth; }
+        .mesaj-kutusu { background: rgba(20,30,20,0.6); border: 1px solid #222; margin-bottom: 15px; padding: 15px; display: flex; gap: 20px; border-left: 4px solid var(--ordu-yesili); }
+        .mesaj-kutusu.ozel { border-left-color: var(--altin); background: rgba(30,30,10,0.4); }
+        .mesaj-kutusu.sistem { border-left-color: #fff; background: rgba(255,255,255,0.1); border-left-style: dashed; }
+        
+        .asker-cerceve { width: 70px; height: 70px; border: 2px solid var(--ordu-yesili); position: relative; flex-shrink: 0; background-size: cover; background-position: center; background-color: #111; cursor: pointer; }
+
+        footer { padding: 20px; background: #05070a; border-top: 1px solid var(--ordu-yesili); display: flex; gap: 15px; align-items: center; }
+        textarea { flex: 1; background: #000; border: 1px solid var(--ordu-yesili); color: var(--neon-yesil); padding: 12px; font-family: 'Courier New'; outline: none; resize: none; height: 45px; }
+        .btn-gonder { background: var(--ordu-yesili); color: #fff; border: 1px solid var(--neon-yesil); padding: 0 30px; cursor: pointer; font-weight: bold; text-transform: uppercase; height: 45px; }
+        
+        #msg-hedef { background: #000; color: var(--altin); border: 2px solid var(--altin); padding: 10px; font-weight: bold; cursor: pointer; outline: none; min-width: 160px; height: 45px; }
+
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; justify-content: center; align-items: center; }
+        .taktik-modal { background: #0a0f0a; border: 2px solid var(--altin); padding: 40px; width: 450px; text-align: center; }
+        
+        #giris-ekrani { position: fixed; inset: 0; background: #000; z-index: 20000; display: flex; justify-content: center; align-items: center; }
+        .giris-kutusu { border: 1px solid var(--neon-yesil); padding: 40px; width: 350px; background: rgba(0,20,0,0.1); text-align: center; }
+        
+        .btn-cikis { background: transparent; border: 1px solid var(--uyari); color: var(--uyari); padding: 5px 15px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-bagis { background: var(--altin); color: #000; border: none; padding: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; text-transform: uppercase; }
+        .admin-bagis-panel { background: #1a1a00; border: 1px dashed var(--altin); padding: 10px; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="radar"></div>
+
+    <div id="giris-ekrani">
+        <div class="giris-kutusu">
+            <h2 style="color:var(--neon-yesil); letter-spacing:5px;">ERİŞİM KONTROL</h2>
+            <hr style="border-color: var(--neon-yesil); opacity:0.3;">
+            <input type="text" id="log-u" placeholder="[ KULLANICI ADI ]" style="width:100%; background:transparent; border:1px solid #333; color:white; padding:12px; margin:20px 0 10px 0; outline:none;">
+            <input type="password" id="log-p" placeholder="[ ERİŞİM ŞİFRESİ ]" style="width:100%; background:transparent; border:1px solid #333; color:white; padding:12px; margin-bottom:20px; outline:none;">
+            <button class="btn-gonder" style="width:100%; height:45px;" onclick="login()">SİSTEME BAĞLAN</button>
+            <p onclick="register()" style="font-size:10px; color:#444; margin-top:15px; cursor:pointer;">>> YENİ PERSONEL KAYDI</p>
+        </div>
+    </div>
+
+    <div id="modal">
+        <div class="taktik-modal" id="modal-icerik"></div>
+    </div>
+
+    <div id="app">
+        <header>
+            <div class="logo"><span class="durum-isigi"></span>HACKER EMRE | SİBER HAREKAT MERKEZİ</div>
+            <div style="display:flex; align-items:center; gap:20px;">
+                <div id="top-cüzdan" style="color:var(--neon-yesil); font-weight:bold; font-family: monospace;">0 $</div>
+                <button class="btn-cikis" onclick="logout()">[ GÜVENLİ ÇIKIŞ ]</button>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <div class="kimlik-karti">
+                <div id="my-foto" class="asker-cerceve" style="margin: 0 auto 10px; width:100px; height:100px;"></div>
+                <h3 id="my-isim" style="margin:5px 0; color:var(--neon-yesil);"></h3>
+                <small id="my-rütbe" style="color:var(--altin);"></small>
+            </div>
+            <button class="btn-gonder" style="width:100%; font-size:10px;" onclick="daily()">LOJİSTİK DESTEK AL (+1000$)</button>
+            <button class="btn-bagis" onclick="siteBagisModal()">SİTEYE BAĞIŞ YAP</button>
+            
+            <!-- Sadece Adminlerin Göreceği Fon Yönetim Paneli -->
+            <div id="admin-fon-panel" class="admin-bagis-panel">
+                <div style="color:var(--altin); font-size:11px; font-weight:bold; margin-bottom:5px;">[ FON YÖNETİMİ ]</div>
+                <div id="site-fon" style="font-size:14px; color:var(--neon-yesil); font-weight:bold; margin-bottom:10px;">FON: 0 $</div>
+                <input type="number" id="fon-cek-miktar" placeholder="Çekilecek miktar..." style="width:100%; background:#000; border:1px solid #444; color:#fff; font-size:11px; padding:5px; margin-bottom:5px;">
+                <button class="btn-gonder" style="width:100%; height:30px; font-size:10px; background:var(--neon-yesil); color:#000;" onclick="fonCek()">FONU HESABIMA AKTAR</button>
+            </div>
+
+            <hr style="border-color:#222; margin:20px 0;">
+            <div style="font-size:11px; color:var(--ordu-yesili); text-align:center;">KOMUTA ZİNCİRİ AKTİF</div>
+        </aside>
+
+        <main class="ana-ekran">
+            <div id="chat" class="terminal"></div>
+            <footer>
+                <select id="msg-hedef">
+                    <option value="ALL">>> TÜM BİRİMLER</option>
+                </select>
+                <textarea id="msg-input" placeholder="Rapor yazın... (Enter ile gönder)"></textarea>
+                <button class="btn-gonder" onclick="sendMessage()">İLET</button>
+            </footer>
+        </main>
+
+        <aside class="sidebar">
+            <div style="color:var(--ordu-yesili); font-weight:bold; margin-bottom:15px; font-size:12px;">AKTİF BİRİMLER</div>
+            <div id="online-list"></div>
+        </aside>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('taktik_db_tr')) || {
+            "emre": { p: "1234", m: 250000, rt: "GENELKURMAY BAŞKANI", av: "" },
+            "kadir": { p: "1234", m: 150000, rt: "BAŞKOMUTAN YARDIMCISI", av: "" }
+        };
+        let logs = JSON.parse(localStorage.getItem('taktik_logs_tr')) || [];
+        let siteFon = parseInt(localStorage.getItem('site_fon')) || 0;
+        let me = "";
+
+        const save = () => { 
+            localStorage.setItem('taktik_db_tr', JSON.stringify(db)); 
+            localStorage.setItem('taktik_logs_tr', JSON.stringify(logs)); 
+            localStorage.setItem('site_fon', siteFon);
+        };
+
+        document.getElementById('msg-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function login() {
+            const u = document.getElementById('log-u').value.toLowerCase().trim();
+            const p = document.getElementById('log-p').value;
+            if(db[u] && db[u].p === p) {
+                me = u;
+                document.getElementById('giris-ekrani').style.display = 'none';
+                document.getElementById('app').style.display = 'grid';
+                render();
+            } else { alert("HATA: GEÇERSİZ KİMLİK!"); }
+        }
+
+        function logout() {
+            if(confirm("Güvenli çıkış yapılsın mı?")) {
+                me = "";
+                document.getElementById('app').style.display = 'none';
+                document.getElementById('giris-ekrani').style.display = 'flex';
+            }
+        }
+
+        function render() {
+            const u = db[me];
+            document.getElementById('top-cüzdan').innerText = `${u.m.toLocaleString()} $`;
+            document.getElementById('my-isim').innerText = me.toUpperCase();
+            document.getElementById('my-rütbe').innerText = u.rt;
+            document.getElementById('my-foto').style.backgroundImage = `url(${u.av || ''})`;
+            
+            // Fon Paneli Görünürlüğü (Sadece Emre ve Kadir)
+            const isAdmin = u.rt.includes("BAŞKAN") || u.rt.includes("YARDIMCISI");
+            const fonPanel = document.getElementById('admin-fon-panel');
+            if(isAdmin) {
+                fonPanel.style.display = 'block';
+                document.getElementById('site-fon').innerText = `FON: ${siteFon.toLocaleString()} $`;
+            } else {
+                fonPanel.style.display = 'none';
+            }
+
+            const targetSelect = document.getElementById('msg-hedef');
+            const currentVal = targetSelect.value;
+            targetSelect.innerHTML = '<option value="ALL">>> TÜM BİRİMLER</option>' + Object.keys(db).filter(x => x !== me).map(x => `<option value="${x}">${x.toUpperCase()}</option>`).join('');
+            targetSelect.value = currentVal;
+
+            const chat = document.getElementById('chat');
+            chat.innerHTML = logs.filter(l => l.to === 'ALL' || l.to === me || l.u === me).map(l => `
+                <div class="mesaj-kutusu ${l.to !== 'ALL' ? 'ozel' : ''} ${l.u === 'SİSTEM' ? 'sistem' : ''}">
+                    <div class="asker-cerceve" ${l.u !== 'SİSTEM' ? `onclick="openProfile('${l.u}')"` : ''} style="background-image:url(${db[l.u]?.av || ''})"></div>
+                    <div>
+                        <div style="font-size:10px; color:var(--ordu-yesili); font-weight:bold;">${db[l.u]?.rt || 'KOMUTANLIK'}</div>
+                        <b style="color:white; cursor:pointer;">${l.u.toUpperCase()}</b>
+                        <div style="margin-top:8px; color:#a1b0a1; font-size:14px;">> ${l.m}</div>
+                    </div>
+                </div>`).join('');
+            chat.scrollTop = chat.scrollHeight;
+
+            document.getElementById('online-list').innerHTML = Object.keys(db).map(user => `
+                <div style="padding:8px; border-bottom:1px solid #111; cursor:pointer; font-size:13px;" onclick="openProfile('${user}')">
+                    <span style="color:var(--neon-yesil)">●</span> ${user.toUpperCase()}
+                </div>`).join('');
+        }
+
+        // Fonu Kendi Hesabına Çekme (Sadece Admin)
+        function fonCek() {
+            const amount = parseInt(document.getElementById('fon-cek-miktar').value);
+            if(isNaN(amount) || amount <= 0 || siteFon < amount) {
+                alert("Fonda yeterli bakiye yok veya miktar geçersiz!");
+                return;
+            }
+            siteFon -= amount;
+            db[me].m += amount;
+            alert(`Merkezi fondan ${amount}$ başarıyla çekildi ve hesabınıza aktarıldı.`);
+            save(); render();
+            document.getElementById('fon-cek-miktar').value = "";
+        }
+
+        function siteBagisModal() {
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('modal-icerik').innerHTML = `
+                <h2 style="color:var(--altin);">MERKEZİ FON BAĞIŞI</h2>
+                <p style="font-size:12px;">Operasyon bütçesine destek olun.</p>
+                <input type="number" id="site-bagis-miktar" placeholder="Bakiye miktarını girin..." style="width:100%; padding:10px; background:#000; border:1px solid var(--altin); color:var(--altin); outline:none;">
+                <button class="btn-gonder" style="width:100%; margin-top:10px; background:var(--altin); color:black;" onclick="execSiteBagis()">BAĞIŞI TAMAMLA</button>
+                <button class="btn-gonder" style="background:#222; width:100%; margin-top:10px; border:none;" onclick="document.getElementById('modal').style.display='none'">İPTAL</button>
+            `;
+        }
+
+        function execSiteBagis() {
+            const amount = parseInt(document.getElementById('site-bagis-miktar').value);
+            if(isNaN(amount) || amount <= 0 || db[me].m < amount) {
+                alert("İşlem başarısız!"); return;
+            }
+            db[me].m -= amount;
+            siteFon += amount;
+            logs.push({ u: "SİSTEM", to: "ALL", m: `🎖️ BAĞIŞ: ${me.toUpperCase()} personeli operasyon fonuna ${amount}$ katkıda bulundu!`, t: Date.now() });
+            save(); render();
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function openProfile(name) {
+            const user = db[name];
+            const isAdmin = db[me].rt.includes("BAŞKAN") || db[me].rt.includes("YARDIMCISI");
+            document.getElementById('modal').style.display = 'flex';
+            
+            let profileHTML = `
+                <div class="asker-cerceve" style="width:150px; height:150px; margin:0 auto 20px; border-color:var(--altin); background-image:url(${user.av || ''})"></div>
+                <h2 style="color:white; margin:0;">${name.toUpperCase()}</h2>
+                <div style="color:var(--altin); margin-bottom:20px;">RÜTBE: ${user.rt}</div>
+            `;
+
+            if(name === me) {
+                profileHTML += `
+                    <p style="font-size:10px;">ASKERİ KİMLİK FOTOĞRAFI YÜKLE:</p>
+                    <input type="file" id="file-in" style="font-size:10px;">
+                    <button class="btn-gonder" style="width:100%; margin-top:5px; background:var(--neon-yesil); color:black;" onclick="uploadFile()">KİMLİĞİ GÜNCELLE</button>
+                `;
+            }
+
+            profileHTML += `<button class="btn-gonder" style="background:#222; width:100%; margin-top:20px; border:none;" onclick="document.getElementById('modal').style.display='none'">KAPAT</button>`;
+            document.getElementById('modal-icerik').innerHTML = profileHTML;
+        }
+
+        function uploadFile() {
+            const file = document.getElementById('file-in').files;
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onloadend = () => { db[me].av = reader.result; save(); render(); document.getElementById('modal').style.display='none'; };
+            reader.readAsDataURL(file);
+        }
+
+        function sendMessage() {
+            const inp = document.getElementById('msg-input');
+            const target = document.getElementById('msg-hedef').value;
+            if(!inp.value.trim()) return;
+            logs.push({ u: me, to: target, m: inp.value, t: Date.now() });
+            inp.value = ""; save(); render();
+        }
+
+        function daily() { db[me].m += 1000; save(); render(); alert("Ödenek alındı."); }
+    </script>
+</body>
+</html>
