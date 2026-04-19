@@ -1,0 +1,27 @@
+/* --- MOBİL UYUMLULUK KODLARI --- */
+@media screen and (max-width: 768px) {
+    /* Menüleri alt alta dizer */
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
+    }
+
+    /* Yazıları telefon ekranına göre küçültür */
+    h1 { font-size: 28px !important; }
+    h2 { font-size: 22px !important; }
+
+    /* Kutuların (card) yan yana değil, alt alta durmasını sağlar */
+    .container, .content, .cards {
+        width: 95% !important;
+        display: flex;
+        flex-direction: column;
+        margin: 0 auto;
+    }
+
+    /* Resimlerin ekrandan taşmasını engeller */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+}
